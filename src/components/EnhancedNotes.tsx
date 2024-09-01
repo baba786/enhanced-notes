@@ -6,8 +6,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { PenLine, Wand2, Search, Moon, Sun, X, Maximize2, Minimize2, Trash2 } from "lucide-react";
-import { cn } from '@/src/lib/utils';
-import { executeQuery } from '@/src/lib/db';
+import { executeQuery } from '@/lib/db';
 
 interface Note {
   id: number;
