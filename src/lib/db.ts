@@ -1,14 +1,11 @@
-import { sql } from '@vercel/postgres';
-import * as dotenv from 'dotenv';
+import { PrismaClient } from '@prisma/client'
 
-dotenv.config(); // Load environment variables from .env file
+const globalForPrisma = global as unknown as { prisma: PrismaClient }
 
-export async function executeQuery(query: string, values: any[] = []) {
-  try {
-    const result = await sql.query(query, values);
-    return result;
-  } catch (error) {
-    console.error('Database query error:', error);
-    throw error;
-  }
-}
+export const prisma =
+  globalForPrisma.prisma ||
+  new PrismaClient({
+    log: ['query'],
+  })
+
+if (process.env.NODE_ENV !== 'production') globalForPrisma.prisma = prisma

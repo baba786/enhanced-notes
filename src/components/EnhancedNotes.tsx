@@ -1,90 +1,90 @@
-'use client';
-import React, { useState, useEffect, useReducer, useMemo } from 'react';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { PenLine, Wand2, Search, Moon, Sun, X, Maximize2, Minimize2, Trash2 } from "lucide-react";
-import { executeQuery } from '@/lib/db';
+'use client'
+
+import React, { useState, useEffect, useReducer, useMemo, useCallback } from 'react'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Textarea } from '@/components/ui/textarea'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
+import { PenLine, Wand2, Search, Moon, Sun, X, Maximize2, Minimize2, Trash2 } from "lucide-react"
+import useDebounce from '@/hooks/useDebounce'
 
 interface Note {
-  id: number;
-  title: string;
-  content: string;
-}
-
-interface AnalysisResult {
-  summary: string;
-  knowledge: Array<{
-    concept: string;
-    explanation: string;
-    resources: Array<{
-      title: string;
-      url: string;
-    }>;
-  }>;
-  actions: string[];
+  id: string
+  title: string
+  content: string
+  createdAt: string
+  updatedAt: string
 }
 
 type NotesAction = 
   | { type: 'ADD_NOTE', payload: Note }
   | { type: 'UPDATE_NOTE', payload: Note }
-  | { type: 'DELETE_NOTE', payload: number }
-  | { type: 'SET_NOTES', payload: Note[] };
+  | { type: 'DELETE_NOTE', payload: string }
+  | { type: 'SET_NOTES', payload: Note[] }
 
 const notesReducer = (state: Note[], action: NotesAction): Note[] => {
   switch (action.type) {
     case 'ADD_NOTE':
-      return [...state, action.payload];
+      return [...state, action.payload]
     case 'UPDATE_NOTE':
-      return state.map(note => note.id === action.payload.id ? action.payload : note);
+      return state.map(note => note.id === action.payload.id ? action.payload : note)
     case 'DELETE_NOTE':
-      return state.filter(note => note.id !== action.payload);
+      return state.filter(note => note.id !== action.payload)
     case 'SET_NOTES':
-      return action.payload;
+      return action.payload
     default:
-      return state;
+      return state
   }
-};
+}
 
 export default function EnhancedNotes() {
-  const [notes, dispatch] = useReducer(notesReducer, []);
-  const [activeNote, setActiveNote] = useState<Note | null>(null);
+  const [notes, dispatch] = useReducer(notesReducer, [])
+  const [activeNote, setActiveNote] = useState<Note | null>(null)
   const [isDarkMode, setIsDarkMode] = useState(() => {
     if (typeof window !== 'undefined') {
-      return localStorage.getItem('isDarkMode') === 'true';
+      return localStorage.getItem('isDarkMode') === 'true'
     }
-    return false;
-  });
-  const [isAnalyzing, setIsAnalyzing] = useState(false);
-  const [analysisResult, setAnalysisResult] = useState<AnalysisResult | null>(null);
-  const [searchTerm, setSearchTerm] = useState("");
-  const [isFocusMode, setIsFocusMode] = useState(false);
-  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
-  const [noteToDelete, setNoteToDelete] = useState<Note | null>(null);
-  const [error, setError] = useState<string | null>(null);
+    return false
+  })
+  const [isAnalyzing, setIsAnalyzing] = useState(false)
+  const [analysisResult, setAnalysisResult] = useState<any | null>(null)
+  const [searchTerm, setSearchTerm] = useState("")
+  const [isFocusMode, setIsFocusMode] = useState(false)
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
+  const [noteToDelete, setNoteToDelete] = useState<Note | null>(null)
+  const [error, setError] = useState<string | null>(null)
+
+  const debouncedActiveNote = useDebounce(activeNote, 500)
 
   useEffect(() => {
     const fetchNotes = async () => {
       try {
-        const result = await executeQuery('SELECT * FROM notes');
-        dispatch({ type: 'SET_NOTES', payload: result.rows });
+        const response = await fetch('/api/notes')
+        if (response.ok) {
+          const fetchedNotes = await response.json()
+          dispatch({ type: 'SET_NOTES', payload: fetchedNotes })
+        } else {
+          throw new Error('Failed to fetch notes')
+        }
       } catch (error) {
-        console.error('Error fetching notes:', error);
+        console.error('Error fetching notes:', error)
+        setError('Failed to fetch notes. Please try again.')
       }
-    };
+    }
 
-    fetchNotes();
-  }, []);
-
-  useEffect(() => {
-    localStorage.setItem('notes', JSON.stringify(notes));
-  }, [notes]);
+    fetchNotes()
+  }, [])
 
   useEffect(() => {
-    localStorage.setItem('isDarkMode', isDarkMode.toString());
-  }, [isDarkMode]);
+    localStorage.setItem('isDarkMode', isDarkMode.toString())
+  }, [isDarkMode])
+
+  useEffect(() => {
+    if (debouncedActiveNote) {
+      handleUpdateNote(debouncedActiveNote)
+    }
+  }, [debouncedActiveNote])
 
   const filteredNotes = useMemo(() => 
     notes.filter(note => 
@@ -92,86 +92,122 @@ export default function EnhancedNotes() {
       note.content.toLowerCase().includes(searchTerm.toLowerCase())
     ),
     [notes, searchTerm]
-  );
+  )
 
-  const handleNewNote = () => {
-    const newNote: Note = { id: Date.now(), title: "New Note", content: "" };
-    dispatch({ type: 'ADD_NOTE', payload: newNote });
-    setActiveNote(newNote);
-  };
+  const handleNewNote = async () => {
+    const newNote = { title: "New Note", content: "" }
+    try {
+      const response = await fetch('/api/notes', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(newNote),
+      })
+      if (response.ok) {
+        const createdNote = await response.json()
+        dispatch({ type: 'ADD_NOTE', payload: createdNote })
+        setActiveNote(createdNote)
+      } else {
+        throw new Error('Failed to create note')
+      }
+    } catch (error) {
+      console.error('Error creating note:', error)
+      setError('Failed to create note. Please try again.')
+    }
+  }
 
-  const handleUpdateNote = (updatedNote: Note) => {
-    dispatch({ type: 'UPDATE_NOTE', payload: updatedNote });
-    setActiveNote(updatedNote);
-  };
+  const handleUpdateNote = async (updatedNote: Note) => {
+    try {
+      const response = await fetch(`/api/notes/${updatedNote.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(updatedNote),
+      })
+      if (response.ok) {
+        const updatedNoteFromServer = await response.json()
+        dispatch({ type: 'UPDATE_NOTE', payload: updatedNoteFromServer })
+      } else {
+        throw new Error('Failed to update note')
+      }
+    } catch (error) {
+      console.error('Error updating note:', error)
+      setError('Failed to update note. Please try again.')
+    }
+  }
 
   const handleDeleteNote = (note: Note) => {
-    setNoteToDelete(note);
-    setIsDeleteDialogOpen(true);
-  };
+    setNoteToDelete(note)
+    setIsDeleteDialogOpen(true)
+  }
 
-  const confirmDeleteNote = () => {
+  const confirmDeleteNote = async () => {
     if (noteToDelete) {
-      dispatch({ type: 'DELETE_NOTE', payload: noteToDelete.id });
-      setActiveNote(notes.length > 1 ? notes[0] : null);
-      setNoteToDelete(null);
-      setIsDeleteDialogOpen(false);
+      try {
+        const response = await fetch(`/api/notes/${noteToDelete.id}`, {
+          method: 'DELETE',
+        })
+        if (response.ok) {
+          dispatch({ type: 'DELETE_NOTE', payload: noteToDelete.id })
+          setActiveNote(notes.length > 1 ? notes[0] : null)
+          setNoteToDelete(null)
+          setIsDeleteDialogOpen(false)
+        } else {
+          throw new Error('Failed to delete note')
+        }
+      } catch (error) {
+        console.error('Error deleting note:', error)
+        setError('Failed to delete note. Please try again.')
+      }
     }
-  };
+  }
 
   const handleCloseNote = () => {
-    setActiveNote(null);
-  };
+    setActiveNote(null)
+  }
 
   const handleAnalyze = async () => {
-    if (!activeNote) return;
+    if (!activeNote) return
 
-    setIsAnalyzing(true);
-    setError(null);
+    setIsAnalyzing(true)
+    setError(null)
 
     try {
       // Simulating API call to AI services for analysis
-      const result = await new Promise<AnalysisResult>((resolve) => {
+      const result = await new Promise<any>((resolve) => {
         setTimeout(() => {
           resolve({
-            summary: "This note discusses project timelines, milestones, and the implementation of a new machine learning algorithm. Key points include setting realistic deadlines and understanding the basics of machine learning.",
+            summary: "This is a simulated analysis result.",
             knowledge: [
               {
-                concept: "Machine Learning",
-                explanation: "Machine Learning is a subset of artificial intelligence that focuses on the development of algorithms and statistical models that enable computer systems to improve their performance on a specific task through experience.",
+                concept: "Simulated Concept",
+                explanation: "This is a simulated explanation.",
                 resources: [
-                  { title: "Introduction to Machine Learning", url: "https://www.coursera.org/learn/machine-learning" },
-                  { title: "Machine Learning Guide", url: "https://developers.google.com/machine-learning/guides" }
-                ]
-              },
-              {
-                concept: "Project Timeline",
-                explanation: "A project timeline is a visual representation of the chronological sequence of tasks and milestones in a project. It helps in planning, tracking progress, and managing resources effectively.",
-                resources: [
-                  { title: "Creating Effective Project Timelines", url: "https://www.pmi.org/learning/library/developing-effective-project-timelines-6896" }
+                  { title: "Simulated Resource", url: "https://example.com" }
                 ]
               }
             ],
             actions: [
-              "Research machine learning algorithms suitable for the project",
-              "Create detailed project timeline with key milestones",
-              "Schedule team meeting to discuss ML implementation strategy"
+              "Simulated action 1",
+              "Simulated action 2"
             ]
-          });
-        }, 2000);
-      });
+          })
+        }, 2000)
+      })
 
-      setAnalysisResult(result);
+      setAnalysisResult(result)
     } catch (err) {
-      setError("An error occurred while analyzing the note. Please try again.");
+      setError("An error occurred while analyzing the note. Please try again.")
     } finally {
-      setIsAnalyzing(false);
+      setIsAnalyzing(false)
     }
-  };
+  }
 
   const toggleFocusMode = () => {
-    setIsFocusMode(!isFocusMode);
-  };
+    setIsFocusMode(!isFocusMode)
+  }
+
+  const handleNoteChange = useCallback((updatedNote: Note) => {
+    setActiveNote(updatedNote)
+  }, [])
 
   return (
     <div className={`flex h-screen ${isDarkMode ? 'dark' : ''}`}>
@@ -221,7 +257,7 @@ export default function EnhancedNotes() {
             <header className="bg-white dark:bg-gray-800 p-4 flex items-center justify-between border-b border-gray-200 dark:border-gray-700">
               <Input 
                 value={activeNote.title} 
-                onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleUpdateNote({...activeNote, title: e.target.value})}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleNoteChange({...activeNote, title: e.target.value})}
                 className="text-xl font-semibold bg-transparent border-none text-gray-800 dark:text-gray-200 focus:ring-0"
                 aria-label="Note title"
               />
@@ -257,7 +293,7 @@ export default function EnhancedNotes() {
             <main className="flex-1 p-4 overflow-auto flex">
               <Textarea
                 value={activeNote.content}
-                onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => handleUpdateNote({...activeNote, content: e.target.value})}
+                onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => handleNoteChange({...activeNote, content: e.target.value})}
                 className="flex-1 resize-none bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-700"
                 placeholder="Start typing your notes here..."
                 aria-label="Note content"
@@ -280,13 +316,13 @@ export default function EnhancedNotes() {
                       <p className="text-sm text-gray-700 dark:text-gray-300">{analysisResult.summary}</p>
                     </TabsContent>
                     <TabsContent value="knowledge" className="py-4">
-                      {analysisResult.knowledge.map((item, index) => (
+                      {analysisResult.knowledge.map((item: any, index: number) => (
                         <div key={index} className="mb-4 bg-white dark:bg-gray-700 p-3 rounded-lg shadow-sm">
                           <h4 className="text-md font-semibold text-gray-800 dark:text-gray-200">{item.concept}</h4>
                           <p className="text-sm mt-1 text-gray-600 dark:text-gray-400">{item.explanation}</p>
                           <h5 className="text-sm font-semibold mt-2 text-blue-600 dark:text-blue-400">Learn More:</h5>
                           <ul className="list-disc list-inside">
-                            {item.resources.map((resource, idx) => (
+                            {item.resources.map((resource: any, idx: number) => (
                               <li key={idx} className="text-sm">
                                 <a href={resource.url} target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:text-blue-600 dark:text-blue-400 dark:hover:text-blue-300 hover:underline">
                                   {resource.title}
@@ -299,7 +335,7 @@ export default function EnhancedNotes() {
                     </TabsContent>
                     <TabsContent value="actions" className="py-4">
                       <ul className="space-y-2">
-                        {analysisResult.actions.map((action, index) => (
+                        {analysisResult.actions.map((action: string, index: number) => (
                           <li key={index} className="flex items-center">
                             <input type="checkbox" className="mr-2 form-checkbox h-4 w-4 text-blue-600" />
                             <span className="text-sm text-gray-700 dark:text-gray-300">{action}</span>
