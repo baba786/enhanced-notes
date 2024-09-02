@@ -61,7 +61,7 @@ export default function EnhancedNotes(): JSX.Element {
 
   const debouncedActiveNote = useDebounce(activeNote, 500)
 
-  const handleUpdateNote = async (updatedNote: Note): Promise<void> => {
+  const handleUpdateNote = useCallback(async (updatedNote: Note): Promise<void> => {
     setIsSaving(true)
     try {
       const response = await fetch(`/api/notes/${updatedNote.id}`, {
@@ -82,7 +82,7 @@ export default function EnhancedNotes(): JSX.Element {
     } finally {
       setIsSaving(false)
     }
-  }
+  }, [addToast, dispatch])
 
   useEffect(() => {
     const fetchNotes = async (): Promise<void> => {
