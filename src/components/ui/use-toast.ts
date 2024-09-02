@@ -26,7 +26,7 @@ const actionTypes = {
 
 let count = 0
 
-function genId() {
+function genId(): string {
   count = (count + 1) % Number.MAX_VALUE
   return count.toString()
 }
@@ -130,14 +130,18 @@ const listeners: Array<(state: State) => void> = []
 
 let memoryState: State = { toasts: [] }
 
-function dispatch(action: Action) {
+function dispatch(action: Action): void {
   memoryState = reducer(memoryState, action)
   listeners.forEach((listener) => {
     listener(memoryState)
   })
 }
 
-function toast(props: ToastProps) {
+function toast(props: ToastProps): {
+  id: string;
+  dismiss: () => void;
+  update: (props: Partial<ToasterToast>) => void;
+} {
   const id = props.id || genId()
 
   const update = (props: Partial<ToasterToast>) =>

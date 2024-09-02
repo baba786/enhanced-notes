@@ -3,7 +3,7 @@
 import { Toast } from "@/components/ui/Toast"
 import { useToast, ToasterToast } from "@/components/ui/use-toast"
 
-export function Toaster() {
+export function Toaster(): JSX.Element {
   const { toasts, dismiss } = useToast()
 
   return (

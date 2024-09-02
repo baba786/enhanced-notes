@@ -1,7 +1,6 @@
 import './globals.css'
 import { Inter } from 'next/font/google'
-import { ToastProvider } from '@/components/ui/use-toast'
-import { ToastContainer } from '@/components/ui/Toast'
+import { Toaster } from '@/components/ui/toaster'
 
 const inter = Inter({ subsets: ['latin'] })
 
@@ -10,18 +9,12 @@ export const metadata = {
   description: 'Your smart note-taking companion',
 }
 
-export default function RootLayout({
-  children,
-}: {
-  children: React.ReactNode
-}): JSX.Element {
+export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en">
       <body className={inter.className}>
-        <ToastProvider>
-          {children}
-          <ToastContainer />
-        </ToastProvider>
+        {children}
+        <Toaster />
       </body>
     </html>
   )

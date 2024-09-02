@@ -32,6 +32,14 @@ export const Toast: React.FC<ToasterToast & { onDismiss: () => void }> = ({
 
 export default Toast
 
-export function ToastContainer() {
-  // Implement your toast container here
+export function ToastContainer(): JSX.Element {
+  const { toasts, removeToast } = useToast()
+
+  return (
+    <div className="fixed bottom-4 right-4 z-50">
+      {toasts.map((toast) => (
+        <Toast key={toast.id} {...toast} onDismiss={() => removeToast(toast.id)} />
+      ))}
+    </div>
+  )
 }

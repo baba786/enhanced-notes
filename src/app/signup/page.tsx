@@ -8,16 +8,16 @@ import { useToast } from '@/components/ui/use-toast'
 import { Loader2 } from 'lucide-react'
 import Link from 'next/link'
 
-export default function SignUp() {
+export default function SignUpPage(): JSX.Element {
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [isLoading, setIsLoading] = useState(false)
   const router = useRouter()
-  const { addToast } = useToast()
+  const { toast } = useToast()
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
+  async function handleSubmit(event: React.FormEvent<HTMLFormElement>): Promise<void> {
+    event.preventDefault()
     setIsLoading(true)
 
     try {
@@ -29,14 +29,26 @@ export default function SignUp() {
       const data = await response.json()
 
       if (response.ok) {
-        addToast("Your account has been created. Please log in.", "success")
+        toast({
+          title: "Account created",
+          description: "Your account has been created. Please log in.",
+          variant: "success"
+        })
         router.push('/login')
       } else {
-        addToast(data.error || 'An error occurred during signup', "error")
+        toast({
+          title: "Error",
+          description: data.error || 'An error occurred during signup',
+          variant: "destructive"
+        })
       }
     } catch (error) {
       console.error('Error during signup:', error)
-      addToast("An unexpected error occurred. Please try again later.", "error")
+      toast({
+        title: "Error",
+        description: "An unexpected error occurred. Please try again later.",
+        variant: "destructive"
+      })
     } finally {
       setIsLoading(false)
     }
