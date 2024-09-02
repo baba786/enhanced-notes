@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation'
 import EnhancedNotes from '@/components/EnhancedNotes'
 
 export default function NotesPage() {
-  const { data: session, status } = useSession()
+  const { status } = useSession()
   const router = useRouter()
 
   if (status === 'loading') {
