@@ -1,41 +1,85 @@
 'use client'
 
 import { useState } from 'react'
-import { signIn } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
-import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { useToast } from '@/components/ui/use-toast'
 import { Loader2 } from 'lucide-react'
+import Link from 'next/link'
+// If you're using NextAuth.js, uncomment the following line:
+// import { signIn } from 'next-auth/react'
 
-export default function Login(): JSX.Element {
+export default function LoginPage(): JSX.Element {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [isLoading, setIsLoading] = useState(false)
   const router = useRouter()
-  const { addToast } = useToast()
+  const { toast } = useToast()  // Change this line
 
   const handleSubmit = async (e: React.FormEvent): Promise<void> => {
     e.preventDefault()
     setIsLoading(true)
 
     try {
-      const result = await signIn('credentials', {
-        redirect: false,
-        email,
-        password,
+      const response = await fetch('/api/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password }),
       })
+      const data = await response.json()
 
-      if (result?.ok) {
-        addToast("You have successfully logged in.", "success")
-        router.push('/notes')
+      if (response.ok) {
+        toast({  // Change this
+          title: "Login successful",
+          description: "You have been logged in successfully.",
+          variant: "success"
+        })
+        router.push('/dashboard')
       } else {
-        addToast("Invalid email or password. Please try again.", "error")
+        toast({  // Change this
+          title: "Login failed",
+          description: data.error || 'An error occurred during login',
+          variant: "destructive"
+        })
       }
     } catch (error) {
-      console.error('Login error:', error)
-      addToast("An unexpected error occurred. Please try again later.", "error")
+      console.error('Error during login:', error)
+      toast({  // Change this
+        title: "Error",
+        description: "An unexpected error occurred. Please try again later.",
+        variant: "destructive"
+      })
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  const handleGoogleSignIn = async () => {
+    setIsLoading(true)
+    try {
+      // If you're using NextAuth.js, uncomment the following line:
+      // await signIn('google', { callbackUrl: '/notes' })
+      
+      // If you're not using NextAuth.js, you'll need to implement your own Google sign-in logic here
+      // For example:
+      // const result = await yourGoogleSignInFunction()
+      // if (result.success) {
+      //   router.push('/notes')
+      // } else {
+      //   toast({
+      //     title: "Login failed",
+      //     description: "Failed to sign in with Google",
+      //     variant: "destructive"
+      //   })
+      // }
+    } catch (error) {
+      console.error('Error during Google sign-in:', error)
+      toast({
+        title: "Error",
+        description: "An unexpected error occurred during Google sign-in. Please try again later.",
+        variant: "destructive"
+      })
     } finally {
       setIsLoading(false)
     }
@@ -77,7 +121,7 @@ export default function Login(): JSX.Element {
             )}
           </Button>
           <Button
-            onClick={() => signIn('google', { callbackUrl: '/notes' })}
+            onClick={handleGoogleSignIn}
             className="w-full"
             variant="outline"
             disabled={isLoading}

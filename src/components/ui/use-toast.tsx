@@ -17,7 +17,7 @@ interface ToastContextType {
 
 const ToastContext = createContext<ToastContextType | undefined>(undefined)
 
-export function useToast() {
+export function useToast(): ToastContextType {
   const context = useContext(ToastContext)
   if (context === undefined) {
     throw new Error('useToast must be used within a ToastProvider')
@@ -29,7 +29,7 @@ interface ToastProviderProps {
   children: ReactNode
 }
 
-export function ToastProvider({ children }: ToastProviderProps) {
+export function ToastProvider({ children }: ToastProviderProps): JSX.Element {
   const [toasts, setToasts] = useState<Toast[]>([])
 
   const removeToast = useCallback((id: number) => {

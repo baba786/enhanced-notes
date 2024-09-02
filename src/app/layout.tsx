@@ -9,7 +9,7 @@ export const metadata = {
   description: 'Your smart note-taking companion',
 }
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default function RootLayout({ children }: { children: React.ReactNode }): JSX.Element {
   return (
     <html lang="en">
       <body className={inter.className}>

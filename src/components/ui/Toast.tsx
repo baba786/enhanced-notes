@@ -2,7 +2,7 @@
 
 import React from 'react'
 import { X } from 'lucide-react'
-import { ToasterToast } from './use-toast'
+import { ToasterToast, useToast } from './use-toast'
 
 export const Toast: React.FC<ToasterToast & { onDismiss: () => void }> = ({ 
   title, 
@@ -33,12 +33,12 @@ export const Toast: React.FC<ToasterToast & { onDismiss: () => void }> = ({
 export default Toast
 
 export function ToastContainer(): JSX.Element {
-  const { toasts, removeToast } = useToast()
+  const { toasts, dismiss } = useToast()
 
   return (
     <div className="fixed bottom-4 right-4 z-50">
-      {toasts.map((toast) => (
-        <Toast key={toast.id} {...toast} onDismiss={() => removeToast(toast.id)} />
+      {toasts.map((toast: ToasterToast) => (
+        <Toast key={toast.id} {...toast} onDismiss={() => dismiss(toast.id)} />
       ))}
     </div>
   )
