@@ -31,3 +31,7 @@ export const Toast: React.FC<ToasterToast & { onDismiss: () => void }> = ({
 }
 
 export default Toast
+
+export function ToastContainer() {
+  // Implement your toast container here
+}

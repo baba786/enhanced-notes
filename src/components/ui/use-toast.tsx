@@ -32,15 +32,15 @@ interface ToastProviderProps {
 export function ToastProvider({ children }: ToastProviderProps) {
   const [toasts, setToasts] = useState<Toast[]>([])
 
+  const removeToast = useCallback((id: number) => {
+    setToasts((prevToasts) => prevToasts.filter(toast => toast.id !== id))
+  }, [])
+
   const addToast = useCallback((message: string, type: 'success' | 'error' | 'info') => {
     const newToast: Toast = { id: Date.now(), message, type }
     setToasts((prevToasts) => [...prevToasts, newToast])
     setTimeout(() => removeToast(newToast.id), 5000) // Auto remove after 5 seconds
-  }, [])
-
-  const removeToast = useCallback((id: number) => {
-    setToasts((prevToasts) => prevToasts.filter(toast => toast.id !== id))
-  }, [])
+  }, [removeToast])
 
   return (
     <React.Fragment>
