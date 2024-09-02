@@ -1,37 +1,31 @@
 'use client'
 
 import React from 'react'
-import { useToast, Toast as ToastType } from './use-toast'
 import { X } from 'lucide-react'
+import { ToasterToast } from './use-toast'
 
-interface ToastProps {
-  toast: ToastType
-}
-
-const Toast: React.FC<ToastProps> = ({ toast }) => {
-  const { removeToast } = useToast()
-
+export const Toast: React.FC<ToasterToast & { onDismiss: () => void }> = ({ 
+  title, 
+  description, 
+  action, 
+  variant = 'default',
+  onDismiss 
+}) => {
   return (
     <div className={`flex items-center justify-between p-4 mb-4 rounded-md shadow-md ${
-      toast.type === 'success' ? 'bg-green-500' :
-      toast.type === 'error' ? 'bg-red-500' : 'bg-blue-500'
+      variant === 'success' ? 'bg-green-500' :
+      variant === 'destructive' ? 'bg-red-500' : 'bg-blue-500'
     } text-white`}>
-      <p>{toast.message}</p>
-      <button onClick={() => removeToast(toast.id)} className="ml-4">
-        <X size={18} />
-      </button>
-    </div>
-  )
-}
-
-export const ToastContainer: React.FC = () => {
-  const { toasts } = useToast()
-
-  return (
-    <div className="fixed bottom-4 right-4 z-50">
-      {toasts.map((toast) => (
-        <Toast key={toast.id} toast={toast} />
-      ))}
+      <div>
+        <h3 className="font-semibold">{title}</h3>
+        {description && <p className="text-sm">{description}</p>}
+      </div>
+      <div className="flex items-center">
+        {action}
+        <button onClick={onDismiss} className="ml-4">
+          <X size={18} />
+        </button>
+      </div>
     </div>
   )
 }

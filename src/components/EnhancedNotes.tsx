@@ -8,7 +8,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { PenLine, Wand2, Search, Moon, Sun, X, Maximize2, Minimize2, Trash2, Save } from "lucide-react"
 import { useToast } from '@/components/ui/use-toast'
-import { Toast } from '@/components/ui/Toast'
+import { Toaster } from '@/components/ui/toaster'
 import useDebounce from '@/hooks/useDebounce'
 
 interface Note {
@@ -44,8 +44,12 @@ export default function EnhancedNotes(): JSX.Element {
   const [notes, dispatch] = useReducer(notesReducer, [])
   const [activeNote, setActiveNote] = useState<Note | null>(null)
   const [isDarkMode, setIsDarkMode] = useState(() => {
-    if (typeof window !== 'undefined') {
-      return localStorage.getItem('isDarkMode') === 'true'
+    try {
+      if (typeof window !== 'undefined') {
+        return localStorage.getItem('isDarkMode') === 'true'
+      }
+    } catch (error) {
+      console.error('Error accessing localStorage:', error)
     }
     return false
   })
@@ -56,8 +60,7 @@ export default function EnhancedNotes(): JSX.Element {
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
   const [noteToDelete, setNoteToDelete] = useState<Note | null>(null)
   const [isSaving, setIsSaving] = useState(false)
-
-  const { toasts, addToast, removeToast } = useToast()
+  const { toast } = useToast()
 
   const debouncedActiveNote = useDebounce(activeNote, 500)
 
@@ -72,17 +75,23 @@ export default function EnhancedNotes(): JSX.Element {
       if (response.ok) {
         const updatedNoteFromServer = await response.json()
         dispatch({ type: 'UPDATE_NOTE', payload: updatedNoteFromServer })
-        addToast({ message: "Note updated successfully.", type: "success" })
+        toast({
+          title: "Note updated successfully.",
+          variant: "success",
+        })
       } else {
         throw new Error('Failed to update note')
       }
     } catch (error) {
       console.error('Error updating note:', error)
-      addToast({ message: "Failed to update note. Please try again.", type: "error" })
+      toast({
+        title: "Failed to update note. Please try again.",
+        variant: "destructive",
+      })
     } finally {
       setIsSaving(false)
     }
-  }, [addToast, dispatch])
+  }, [dispatch, toast])
 
   useEffect(() => {
     const fetchNotes = async (): Promise<void> => {
@@ -96,12 +105,15 @@ export default function EnhancedNotes(): JSX.Element {
         }
       } catch (error) {
         console.error('Error fetching notes:', error)
-        addToast({ message: "Failed to fetch notes. Please try again.", type: "error" })
+        toast({
+          title: "Failed to fetch notes. Please try again.",
+          variant: "destructive",
+        })
       }
     }
 
     fetchNotes()
-  }, [addToast])
+  }, [toast])
 
   useEffect(() => {
     localStorage.setItem('isDarkMode', isDarkMode.toString())
@@ -134,13 +146,19 @@ export default function EnhancedNotes(): JSX.Element {
         const createdNote = await response.json()
         dispatch({ type: 'ADD_NOTE', payload: createdNote })
         setActiveNote(createdNote)
-        addToast({ message: "New note created successfully.", type: "success" })
+        toast({
+          title: "New note created successfully.",
+          variant: "success",
+        })
       } else {
         throw new Error('Failed to create note')
       }
     } catch (error) {
       console.error('Error creating note:', error)
-      addToast({ message: "Failed to create note. Please try again.", type: "error" })
+      toast({
+        title: "Failed to create note. Please try again.",
+        variant: "destructive",
+      })
     }
   }
 
@@ -160,13 +178,19 @@ export default function EnhancedNotes(): JSX.Element {
           setActiveNote(notes.length > 1 ? notes[0] : null)
           setNoteToDelete(null)
           setIsDeleteDialogOpen(false)
-          addToast({ message: "Note deleted successfully.", type: "success" })
+          toast({
+            title: "Note deleted successfully.",
+            variant: "success",
+          })
         } else {
           throw new Error('Failed to delete note')
         }
       } catch (error) {
         console.error('Error deleting note:', error)
-        addToast({ message: "Failed to delete note. Please try again.", type: "error" })
+        toast({
+          title: "Failed to delete note. Please try again.",
+          variant: "destructive",
+        })
       }
     }
   }
@@ -193,10 +217,16 @@ export default function EnhancedNotes(): JSX.Element {
 
       const result = await response.json()
       setAnalysisResult(result)
-      addToast({ message: "Your note has been analyzed successfully.", type: "success" })
+      toast({
+        title: "Your note has been analyzed successfully.",
+        variant: "success",
+      })
     } catch (err) {
       console.error('Error analyzing note:', err)
-      addToast({ message: "An error occurred while analyzing the note. Please try again.", type: "error" })
+      toast({
+        title: "An error occurred while analyzing the note. Please try again.",
+        variant: "destructive",
+      })
     } finally {
       setIsAnalyzing(false)
     }
@@ -206,8 +236,8 @@ export default function EnhancedNotes(): JSX.Element {
     setIsFocusMode(!isFocusMode)
   }
 
-  const handleNoteChange = useCallback((updatedNote: Note): void => {
-    setActiveNote(updatedNote)
+  const handleNoteChange = useCallback((updatedNote: Partial<Note>): void => {
+    setActiveNote(prev => prev ? { ...prev, ...updatedNote } : null)
   }, [])
 
   return (
@@ -260,12 +290,12 @@ export default function EnhancedNotes(): JSX.Element {
             <header className="bg-white dark:bg-gray-800 p-4 flex items-center justify-between border-b border-gray-200 dark:border-gray-700">
               <Input 
                 value={activeNote.title} 
-                onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleNoteChange({...activeNote, title: e.target.value})}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleNoteChange({ title: e.target.value })}
                 className="text-xl font-semibold bg-transparent border-none text-gray-800 dark:text-gray-200 focus:ring-0"
                 aria-label="Note title"
               />
               <div className="flex items-center space-x-2">
-                <Button onClick={handleAnalyze} disabled={isAnalyzing} className="bg-blue-500 hover:bg-blue-600 text-white">
+                <Button onClick={handleAnalyze} disabled={isAnalyzing} className="bg-blue-500 hover:bg-blue-600 text-white" aria-label="Analyze note">
                   {isAnalyzing ? (
                     <>
                       <div className="animate-spin mr-2 h-4 w-4 border-2 border-current border-t-transparent rounded-full" />
@@ -297,7 +327,7 @@ export default function EnhancedNotes(): JSX.Element {
               <div className="flex-1 relative">
                 <Textarea
                   value={activeNote.content}
-                  onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => handleNoteChange({...activeNote, content: e.target.value})}
+                  onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => handleNoteChange({ content: e.target.value })}
                   className="w-full h-full resize-none bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-700"
                   placeholder="Start typing your notes here..."
                   aria-label="Note content"
@@ -385,16 +415,7 @@ export default function EnhancedNotes(): JSX.Element {
         </DialogContent>
       </Dialog>
 
-      <div className="fixed bottom-4 right-4 space-y-2">
-        {toasts.map((toast) => (
-          <Toast
-            key={toast.id}
-            message={toast.message}
-            type={toast.type}
-            onClose={() => removeToast(toast.id)}
-          />
-        ))}
-      </div>
+      <Toaster />
     </div>
   )
 }
