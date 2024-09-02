@@ -30,7 +30,7 @@ export async function POST(request: Request): Promise<NextResponse> {
     });
 
     // Return the new user without the password
-    const { password: _password, ...userWithoutPassword } = newUser;
+    const { ...userWithoutPassword } = newUser;
     return NextResponse.json(userWithoutPassword, { status: 201 });
 
   } catch (error) {

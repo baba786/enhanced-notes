@@ -50,7 +50,7 @@ export default function EnhancedNotes(): JSX.Element {
     return false
   })
   const [isAnalyzing, setIsAnalyzing] = useState(false)
-  const [analysisResult, setAnalysisResult] = useState<Record<string, any> | null>(null)
+  const [analysisResult, setAnalysisResult] = useState<{ summary?: string; knowledge?: { concept: string; explanation: string; resources: { url: string; title: string }[] }[]; actions?: string[] } | null>(null)
   const [searchTerm, setSearchTerm] = useState("")
   const [isFocusMode, setIsFocusMode] = useState(false)
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
@@ -60,6 +60,29 @@ export default function EnhancedNotes(): JSX.Element {
   const { toasts, addToast, removeToast } = useToast()
 
   const debouncedActiveNote = useDebounce(activeNote, 500)
+
+  const handleUpdateNote = async (updatedNote: Note): Promise<void> => {
+    setIsSaving(true)
+    try {
+      const response = await fetch(`/api/notes/${updatedNote.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(updatedNote),
+      })
+      if (response.ok) {
+        const updatedNoteFromServer = await response.json()
+        dispatch({ type: 'UPDATE_NOTE', payload: updatedNoteFromServer })
+        addToast({ message: "Note updated successfully.", type: "success" })
+      } else {
+        throw new Error('Failed to update note')
+      }
+    } catch (error) {
+      console.error('Error updating note:', error)
+      addToast({ message: "Failed to update note. Please try again.", type: "error" })
+    } finally {
+      setIsSaving(false)
+    }
+  }
 
   useEffect(() => {
     const fetchNotes = async (): Promise<void> => {
@@ -89,7 +112,7 @@ export default function EnhancedNotes(): JSX.Element {
     if (debouncedActiveNote) {
       handleUpdateNote(debouncedActiveNote)
     }
-  }, [debouncedActiveNote])
+  }, [debouncedActiveNote, handleUpdateNote])
 
   const filteredNotes = useMemo(() => 
     notes.filter(note => 
@@ -118,29 +141,6 @@ export default function EnhancedNotes(): JSX.Element {
     } catch (error) {
       console.error('Error creating note:', error)
       addToast({ message: "Failed to create note. Please try again.", type: "error" })
-    }
-  }
-
-  const handleUpdateNote = async (updatedNote: Note): Promise<void> => {
-    setIsSaving(true)
-    try {
-      const response = await fetch(`/api/notes/${updatedNote.id}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(updatedNote),
-      })
-      if (response.ok) {
-        const updatedNoteFromServer = await response.json()
-        dispatch({ type: 'UPDATE_NOTE', payload: updatedNoteFromServer })
-        addToast({ message: "Note updated successfully.", type: "success" })
-      } else {
-        throw new Error('Failed to update note')
-      }
-    } catch (error) {
-      console.error('Error updating note:', error)
-      addToast({ message: "Failed to update note. Please try again.", type: "error" })
-    } finally {
-      setIsSaving(false)
     }
   }
 
@@ -324,16 +324,16 @@ export default function EnhancedNotes(): JSX.Element {
                       <TabsTrigger value="actions">Actions</TabsTrigger>
                     </TabsList>
                     <TabsContent value="summary" className="py-4">
-                      <p className="text-sm text-gray-700 dark:text-gray-300">{analysisResult.summary}</p>
+                      <p className="text-sm text-gray-700 dark:text-gray-300">{analysisResult?.summary}</p>
                     </TabsContent>
                     <TabsContent value="knowledge" className="py-4">
-                      {analysisResult.knowledge.map((item: { concept: string; explanation: string; resources: { url: string; title: string }[] }, index: number) => (
+                      {analysisResult?.knowledge?.map((item, index) => (
                         <div key={index} className="mb-4 bg-white dark:bg-gray-700 p-3 rounded-lg shadow-sm">
                           <h4 className="text-md font-semibold text-gray-800 dark:text-gray-200">{item.concept}</h4>
                           <p className="text-sm mt-1 text-gray-600 dark:text-gray-400">{item.explanation}</p>
                           <h5 className="text-sm font-semibold mt-2 text-blue-600 dark:text-blue-400">Learn More:</h5>
                           <ul className="list-disc list-inside">
-                            {item.resources.map((resource: { url: string; title: string }, idx: number) => (
+                            {item.resources.map((resource, idx) => (
                               <li key={idx} className="text-sm">
                                 <a href={resource.url} target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:text-blue-600 dark:text-blue-400 dark:hover:text-blue-300 hover:underline">
                                   {resource.title}
@@ -346,7 +346,7 @@ export default function EnhancedNotes(): JSX.Element {
                     </TabsContent>
                     <TabsContent value="actions" className="py-4">
                       <ul className="space-y-2">
-                        {analysisResult.actions.map((action: string, index: number) => (
+                        {analysisResult?.actions?.map((action, index) => (
                           <li key={index} className="flex items-center">
                             <input type="checkbox" className="mr-2 form-checkbox h-4 w-4 text-blue-600" />
                             <span className="text-sm text-gray-700 dark:text-gray-300">{action}</span>
