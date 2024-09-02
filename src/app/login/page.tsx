@@ -7,12 +7,12 @@ import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 
-export default function Login() {
+export default function Login(): JSX.Element {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const router = useRouter()
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent): Promise<void> => {
     e.preventDefault()
     const result = await signIn('credentials', {
       redirect: false,
@@ -56,7 +56,7 @@ export default function Login() {
           Login with Google
         </Button>
         <p className="text-center">
-          Don't have an account? <Link href="/signup" className="text-blue-500 hover:underline">Sign up</Link>
+          Don&apos;t have an account? <Link href="/signup" className="text-blue-500 hover:underline">Sign up</Link>
         </p>
       </form>
     </div>

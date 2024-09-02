@@ -12,7 +12,11 @@ interface Toast extends ToastOptions {
   id: number
 }
 
-export function useToast() {
+export function useToast(): {
+  toasts: Toast[];
+  addToast: ({ message, type, duration }: ToastOptions) => void;
+  removeToast: (id: number) => void;
+} {
   const [toasts, setToasts] = useState<Toast[]>([])
 
   const addToast = useCallback(({ message, type, duration = 3000 }: ToastOptions) => {

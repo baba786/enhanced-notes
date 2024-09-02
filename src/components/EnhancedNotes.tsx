@@ -40,7 +40,7 @@ const notesReducer = (state: Note[], action: NotesAction): Note[] => {
   }
 }
 
-export default function EnhancedNotes() {
+export default function EnhancedNotes(): JSX.Element {
   const [notes, dispatch] = useReducer(notesReducer, [])
   const [activeNote, setActiveNote] = useState<Note | null>(null)
   const [isDarkMode, setIsDarkMode] = useState(() => {
@@ -50,7 +50,7 @@ export default function EnhancedNotes() {
     return false
   })
   const [isAnalyzing, setIsAnalyzing] = useState(false)
-  const [analysisResult, setAnalysisResult] = useState<any | null>(null)
+  const [analysisResult, setAnalysisResult] = useState<Record<string, any> | null>(null)
   const [searchTerm, setSearchTerm] = useState("")
   const [isFocusMode, setIsFocusMode] = useState(false)
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
@@ -62,7 +62,7 @@ export default function EnhancedNotes() {
   const debouncedActiveNote = useDebounce(activeNote, 500)
 
   useEffect(() => {
-    const fetchNotes = async () => {
+    const fetchNotes = async (): Promise<void> => {
       try {
         const response = await fetch('/api/notes')
         if (response.ok) {
@@ -99,7 +99,7 @@ export default function EnhancedNotes() {
     [notes, searchTerm]
   )
 
-  const handleNewNote = async () => {
+  const handleNewNote = async (): Promise<void> => {
     const newNote = { title: "New Note", content: "" }
     try {
       const response = await fetch('/api/notes', {
@@ -121,7 +121,7 @@ export default function EnhancedNotes() {
     }
   }
 
-  const handleUpdateNote = async (updatedNote: Note) => {
+  const handleUpdateNote = async (updatedNote: Note): Promise<void> => {
     setIsSaving(true)
     try {
       const response = await fetch(`/api/notes/${updatedNote.id}`, {
@@ -144,12 +144,12 @@ export default function EnhancedNotes() {
     }
   }
 
-  const handleDeleteNote = (note: Note) => {
+  const handleDeleteNote = (note: Note): void => {
     setNoteToDelete(note)
     setIsDeleteDialogOpen(true)
   }
 
-  const confirmDeleteNote = async () => {
+  const confirmDeleteNote = async (): Promise<void> => {
     if (noteToDelete) {
       try {
         const response = await fetch(`/api/notes/${noteToDelete.id}`, {
@@ -171,11 +171,11 @@ export default function EnhancedNotes() {
     }
   }
 
-  const handleCloseNote = () => {
+  const handleCloseNote = (): void => {
     setActiveNote(null)
   }
 
-  const handleAnalyze = async () => {
+  const handleAnalyze = async (): Promise<void> => {
     if (!activeNote) return
 
     setIsAnalyzing(true)
@@ -202,11 +202,11 @@ export default function EnhancedNotes() {
     }
   }
 
-  const toggleFocusMode = () => {
+  const toggleFocusMode = (): void => {
     setIsFocusMode(!isFocusMode)
   }
 
-  const handleNoteChange = useCallback((updatedNote: Note) => {
+  const handleNoteChange = useCallback((updatedNote: Note): void => {
     setActiveNote(updatedNote)
   }, [])
 
@@ -327,13 +327,13 @@ export default function EnhancedNotes() {
                       <p className="text-sm text-gray-700 dark:text-gray-300">{analysisResult.summary}</p>
                     </TabsContent>
                     <TabsContent value="knowledge" className="py-4">
-                      {analysisResult.knowledge.map((item: any, index: number) => (
+                      {analysisResult.knowledge.map((item: { concept: string; explanation: string; resources: { url: string; title: string }[] }, index: number) => (
                         <div key={index} className="mb-4 bg-white dark:bg-gray-700 p-3 rounded-lg shadow-sm">
                           <h4 className="text-md font-semibold text-gray-800 dark:text-gray-200">{item.concept}</h4>
                           <p className="text-sm mt-1 text-gray-600 dark:text-gray-400">{item.explanation}</p>
                           <h5 className="text-sm font-semibold mt-2 text-blue-600 dark:text-blue-400">Learn More:</h5>
                           <ul className="list-disc list-inside">
-                            {item.resources.map((resource: any, idx: number) => (
+                            {item.resources.map((resource: { url: string; title: string }, idx: number) => (
                               <li key={idx} className="text-sm">
                                 <a href={resource.url} target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:text-blue-600 dark:text-blue-400 dark:hover:text-blue-300 hover:underline">
                                   {resource.title}
