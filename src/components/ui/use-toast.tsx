@@ -1,5 +1,6 @@
 'use client'
 
+import * as React from 'react'
 import { createContext, useContext, useState, useCallback, ReactNode } from 'react'
 
 export interface Toast {
@@ -42,8 +43,10 @@ export function ToastProvider({ children }: ToastProviderProps) {
   }, [])
 
   return (
-    <ToastContext.Provider value={{ toasts, addToast, removeToast }}>
-      {children}
-    </ToastContext.Provider>
+    <React.Fragment>
+      <ToastContext.Provider value={{ toasts, addToast, removeToast }}>
+        {children}
+      </ToastContext.Provider>
+    </React.Fragment>
   )
 }
