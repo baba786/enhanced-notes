@@ -1,5 +1,5 @@
 import React from 'react'
-import { ToastProvider } from "../components/ui/toast"
+import { ToastProvider, ToastViewport } from "../components/ui/toast"
 
 export default function RootLayout({
   children,
@@ -11,6 +11,7 @@ export default function RootLayout({
       <body>
         <ToastProvider>
           {children}
+          <ToastViewport />
         </ToastProvider>
       </body>
     </html>
