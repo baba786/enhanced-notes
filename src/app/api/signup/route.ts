@@ -34,7 +34,11 @@ export async function POST(request: Request): Promise<NextResponse> {
     return NextResponse.json(userWithoutPassword, { status: 201 });
 
   } catch (error) {
-    console.error('Error during signup:', error);
+    if (error instanceof Error) {
+      console.error('Error during signup:', error.message);
+    } else {
+      console.error('Unexpected error during signup:', error);
+    }
     return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
   }
 }

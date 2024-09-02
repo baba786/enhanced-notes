@@ -18,16 +18,17 @@ export default function SignUp(): JSX.Element {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ name, email, password }),
-      })
+      });
+      const data = await response.json();
       if (response.ok) {
-        router.push('/login')
+        router.push('/login');
       } else {
-        const data = await response.json()
-        alert(data.error || 'An error occurred during signup')
+        console.error('Signup error:', data);
+        alert(data.error || 'An error occurred during signup');
       }
     } catch (error) {
-      console.error('Error during signup:', error)
-      alert('An error occurred during signup')
+      console.error('Error during signup:', error);
+      alert('An error occurred during signup');
     }
   }
 
