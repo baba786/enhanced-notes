@@ -1,5 +1,4 @@
 import React from 'react'
-import { Button } from '@/components/ui/button'
 
 export default function Home() {
   return (
@@ -18,8 +17,6 @@ export default function Home() {
             app/page.tsx
           </code>
         </p>
-
-        <Button>Click me</Button>
       </main>
     </div>
   )

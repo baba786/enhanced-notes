@@ -1,10 +1,49 @@
 'use client'
 
-import React from 'react'
+import React, { createContext, useContext, useState } from 'react'
 import { X } from 'lucide-react'
-import { ToasterToast, useToast } from './use-toast'
+import { ToastProps } from './use-toast'
 
-export const Toast: React.FC<ToasterToast & { onDismiss: () => void }> = ({ 
+type ToastType = ToastProps & {
+  id: string
+}
+
+type ToastContextType = {
+  toast: (toast: Omit<ToastType, 'id'>) => void
+  toasts: ToastType[]
+  dismiss: (id: string) => void
+}
+
+const ToastContext = createContext<ToastContextType | undefined>(undefined)
+
+export const ToastProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const [toasts, setToasts] = useState<ToastType[]>([])
+
+  const toast = (newToast: Omit<ToastType, 'id'>) => {
+    const id = Math.random().toString(36).substr(2, 9)
+    setToasts((prevToasts) => [...prevToasts, { ...newToast, id }])
+  }
+
+  const dismiss = (id: string) => {
+    setToasts((prevToasts) => prevToasts.filter((toast) => toast.id !== id))
+  }
+
+  return (
+    <ToastContext.Provider value={{ toast, toasts, dismiss }}>
+      {children}
+    </ToastContext.Provider>
+  )
+}
+
+export const useToast = () => {
+  const context = useContext(ToastContext)
+  if (context === undefined) {
+    throw new Error('useToast must be used within a ToastProvider')
+  }
+  return context
+}
+
+export const Toast: React.FC<ToastType & { onDismiss: () => void }> = ({ 
   title, 
   description, 
   action, 
@@ -30,14 +69,12 @@ export const Toast: React.FC<ToasterToast & { onDismiss: () => void }> = ({
   )
 }
 
-export default Toast
-
 export function ToastContainer(): JSX.Element {
   const { toasts, dismiss } = useToast()
 
   return (
     <div className="fixed bottom-4 right-4 z-50">
-      {toasts.map((toast: ToasterToast) => (
+      {toasts.map((toast) => (
         <Toast key={toast.id} {...toast} onDismiss={() => dismiss(toast.id)} />
       ))}
     </div>

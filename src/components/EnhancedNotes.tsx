@@ -246,7 +246,12 @@ export default function EnhancedNotes(): JSX.Element {
         <div className="w-64 bg-gray-100 dark:bg-gray-800 p-4 flex flex-col border-r border-gray-200 dark:border-gray-700">
           <div className="flex items-center justify-between mb-6">
             <h1 className="text-xl font-bold text-gray-800 dark:text-gray-200">EnhancedNotes</h1>
-            <Button variant="ghost" size="icon" onClick={() => setIsDarkMode(!isDarkMode)} aria-label={isDarkMode ? "Switch to light mode" : "Switch to dark mode"}>
+            <Button 
+              variant={"ghost" as "primary" | "secondary" | "outline" | "ghost" | "destructive"}
+              size="icon" 
+              onClick={() => setIsDarkMode(!isDarkMode)} 
+              aria-label={isDarkMode ? "Switch to light mode" : "Switch to dark mode"}
+            >
               {isDarkMode ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
             </Button>
           </div>
