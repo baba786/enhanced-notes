@@ -1,73 +1,39 @@
-import React, { createContext, useContext, useState, useCallback } from 'react'
+'use client'
+
+import React from 'react'
+import { useToast, Toast as ToastType } from './use-toast'
 import { X } from 'lucide-react'
 
-interface Toast {
-  id: number
-  message: string
-  type: 'success' | 'error' | 'info'
-}
-
-interface ToastContextType {
-  toasts: Toast[]
-  addToast: (message: string, type: 'success' | 'error' | 'info') => void
-  removeToast: (id: number) => void
-}
-
-const ToastContext = createContext<ToastContextType | undefined>(undefined)
-
-export function useToast() {
-  const context = useContext(ToastContext)
-  if (context === undefined) {
-    throw new Error('useToast must be used within a ToastProvider')
-  }
-  return context
-}
-
 interface ToastProps {
-  message: string
-  type: 'success' | 'error' | 'info'
-  onClose: () => void
+  toast: ToastType
 }
 
-function Toast({ message, type, onClose }: ToastProps): JSX.Element {
-  const bgColor = type === 'success' ? 'bg-green-500' : type === 'error' ? 'bg-red-500' : 'bg-blue-500'
+const Toast: React.FC<ToastProps> = ({ toast }) => {
+  const { removeToast } = useToast()
 
   return (
-    <div className={`${bgColor} text-white p-4 rounded-md shadow-md flex justify-between items-center`}>
-      <span>{message}</span>
-      <button onClick={onClose} className="ml-4 text-white hover:text-gray-200">
+    <div className={`flex items-center justify-between p-4 mb-4 rounded-md shadow-md ${
+      toast.type === 'success' ? 'bg-green-500' :
+      toast.type === 'error' ? 'bg-red-500' : 'bg-blue-500'
+    } text-white`}>
+      <p>{toast.message}</p>
+      <button onClick={() => removeToast(toast.id)} className="ml-4">
         <X size={18} />
       </button>
     </div>
   )
 }
 
-export function ToastProvider({ children }: { children: React.ReactNode }) {
-  const [toasts, setToasts] = useState<Toast[]>([])
-
-  const addToast = useCallback((message: string, type: 'success' | 'error' | 'info') => {
-    const newToast: Toast = { id: Date.now(), message, type }
-    setToasts((prevToasts) => [...prevToasts, newToast])
-    setTimeout(() => removeToast(newToast.id), 5000) // Auto remove after 5 seconds
-  }, [])
-
-  const removeToast = useCallback((id: number) => {
-    setToasts((prevToasts) => prevToasts.filter(toast => toast.id !== id))
-  }, [])
+export const ToastContainer: React.FC = () => {
+  const { toasts } = useToast()
 
   return (
-    <ToastContext.Provider value={{ toasts, addToast, removeToast }}>
-      {children}
-      <div className="fixed bottom-4 right-4 z-50 space-y-2">
-        {toasts.map((toast) => (
-          <Toast
-            key={toast.id}
-            message={toast.message}
-            type={toast.type}
-            onClose={() => removeToast(toast.id)}
-          />
-        ))}
-      </div>
-    </ToastContext.Provider>
+    <div className="fixed bottom-4 right-4 z-50">
+      {toasts.map((toast) => (
+        <Toast key={toast.id} toast={toast} />
+      ))}
+    </div>
   )
 }
+
+export default Toast
